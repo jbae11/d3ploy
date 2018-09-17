@@ -69,9 +69,9 @@ class NOInst(Institution):
     
     driving_commod = ts.String(
         doc="Sets the driving commodity for the institution. That is the " +
-            "commodity that no_inst will deploy against the demand equation."
+            "commodity that no_inst will deploy against the demand equation.",
         tooltip="Driving Commodity",
-        uilabel="Driving Commodity"
+        uilabel="Driving Commodity",
         default="POWER"
     )
 
@@ -288,7 +288,6 @@ class NOInst(Institution):
         # update commodities
         self.commodities[commod] = {agent.prototype: value}
 
-
     def extract_demand(self, agent, time, value, commod):
         """
         Gather information on the demand of a commodity over the
@@ -320,8 +319,7 @@ class NOInst(Institution):
         -------
         demand : The calculated demand at a given timestep.
         """
-        timestep = self.context.dt
-        t = time * timestep
+        t = time
         demand = eval(self.demand_eq)
         return demand
 

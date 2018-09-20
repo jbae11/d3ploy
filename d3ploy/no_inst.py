@@ -49,6 +49,14 @@ class NOInst(Institution):
               "The equation should use `t' as the dependent variable",
         tooltip="Demand equation for driving commodity",
         uilabel="Demand Equation")
+    
+    demand_eq_timestep = ts.String(
+        doc="This is the string for defining the timestep used to evaluate " +
+            "the demand equation. Accepted values are 'month' and 'year' ",
+        tooltip="Demand equation timestep for driving commodity",
+        uilabel="Demand Equation Timestep"
+        default="month"
+    )
 
     calc_method = ts.String(
         doc="This is the calculated method used to determine the supply and demand " +
@@ -153,8 +161,16 @@ class NOInst(Institution):
                 self.commodity_demand[commod] = defaultdict(float)
             self.fresh = False
         print('entered successfully')
+        self.get_eval_dt()
         self.print_variables()
 
+    def get_eval_dt(self):
+        if self.demand_eq_timestep == 'month':
+            self.eval_dt = 30 * 24 * 3600
+        elif self.demand_eq_timestep == 'year':
+            self.eval_dt = 12 * 30 * 24 * 3600
+        else:
+            raise ValueError(self.demand_eq_timestep, ' is not an acceptable timestep. Try "year" or "month".') 
 
     def tock(self):
         """
@@ -326,8 +342,10 @@ class NOInst(Institution):
         -------
         demand : The calculated demand at a given timestep.
         """
-        t = time
+
+        t = time * (self.context.dt / self.eval_dt)
         demand = eval(self.demand_eq)
+        print(demand)
         return demand
 
     def moving_avg(self, ts, steps=1, std_dev = 0, back_steps=5):

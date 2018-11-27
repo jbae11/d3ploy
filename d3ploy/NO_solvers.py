@@ -67,7 +67,7 @@ def predict_arch(ts, steps=1, std_dev=0, back_steps=2):
     calculation to perform the prediciton.
     """
     v = list(ts.values())
-    v = v[-1*2:]
+    v = v[-1*back_steps:]
     try:
         model = arch_model(v)
         fit = model.fit(disp="off", show_warning=False)

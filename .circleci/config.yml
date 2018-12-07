@@ -12,7 +12,7 @@ jobs:
             name: build d3ploy
             command: python setup.py install
 
-    unit_test:
+    tests:
         docker:
             - image: nuclearbae/d3ploy
         working_directory: ~/d3ploy
@@ -24,9 +24,13 @@ jobs:
                     python setup.py install
           - run:
                 name: solver unit tests
-                command: |
-                    pytest ./tests/unit_tests/deploy_solver_unit_tests.py
-                    pytest ./tests/integration_tests/continuous_integration_test.py
+                command: pytest ./tests/unit_tests/deploy_solver_unit_tests.py
+          - run:
+                name: integration test
+                command: pytest ./tests/integration_tests/continuous_integration_test.py
+          - run:
+                name: tech pref test
+                command: pytest ./tests/integration_tests/tech_pref_test.py
     
 
 workflows:

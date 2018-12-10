@@ -49,3 +49,88 @@ def plot_demand_supply(all_dict, commod, test, demand_driven):
         fancybox=True)
     plt.savefig(test, dpi=300, bbox_inches='tight')
     plt.close()
+
+
+def plot_supply_chain(cursor):
+    """ plots the supply chain in the Cyclus simulation
+
+    Parameters:
+    -----------
+    cursor: sqlite cursor
+        cursor to the sqlite output file
+    
+    Returns:
+    --------
+    """
+    protos = cursor.execute('SELECT DISTINCT(prototype) FROM agententry WHERE Kind = "Facility"').fetchall()
+    chain_dict = {}
+    sender_list = []
+    receiver_list = []
+    alpha = []
+    omega = []
+    for proto in protos:
+        name = proto[0]
+        query_str = """ SELECT DISTINCT(commodity) FROM transactions
+                        INNER JOIN agententry 
+                        ON agententry.agentid = transactions.senderid
+                        WHERE prototype='%s'""" %name
+        out_commod = query_result_to_list(cursor.execute(query_str).fetchall())
+        in_commod = query_result_to_list(cursor.execute(query_str.replace('senderid', 'receiverid')).fetchall())
+        
+        # alpha and omega if they dont in or out any commodities
+        if len(out_commod) == 0 and len(in_commod) != 0:
+            omega.append(name)
+        if len(in_commod) == 0 and len(out_commod) != 0:
+            alpha.append(name)
+
+        chain_dict[name] = {'in': in_commod,
+                            'out': out_commod}
+    print('chain dict', chain_dict)
+    print('alpha', alpha)
+    print('omega', omega)
+    for a in alpha:
+        for commodity in chain_dict[a]['out']:
+            supply_chain = [a]
+            commod_chain = [commodity]
+            key = a
+            while key not in omega:
+                for key, val in chain_dict.items():
+                    if commodity in val['in']:
+                        supply_chain.append(key)
+                        commod = chain_dict[key]['out']
+                        if len(commod) == 0:
+                            break
+                        commod_chain.append(commod)
+                        break
+                print(commod_chain)
+            string = ''
+            print('commod chain', commod_chain)
+            print('supply chain', supply_chain)
+
+            for indx, val in enumerate(supply_chain):
+                if val == supply_chain[-1]:
+                    string += val
+                    break
+                string += val + '\t-----\t'
+                try:
+                    string += '[' + commod_chain[indx] + ']\t-----\t'
+                except TypeError:
+                    z = ''
+                    for commod in commod_chain[indx]:
+                        if commod != commod_chain[indx][-1]:
+                            z += commod + ', '
+                        else:
+                            z += commod
+                    string += '[' + z + ']\t-----\t'
+
+    return string
+
+
+def query_result_to_list(query_result, column_name=0):
+    """ Converts sqlite query results to lists. The default value
+        is integer 0, which is the first column in the query result."""
+    x = []
+    for result in query_result:
+        x.append(result[column_name])
+    return x
+
